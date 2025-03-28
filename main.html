@@ -2,10 +2,7 @@
 <head></head>
 <body>
 <script type="application/javascript">
-  const mensajes = [];
-  const API_URL = "https://chat.nrywhite.lat/chats";
 
-  // Crear contenedor principal
   const app = document.createElement("div");
   app.style.height = "100vh";
   app.style.display = "flex";
@@ -13,29 +10,24 @@
   app.style.justifyContent = "space-between";
   app.style.fontFamily = "sans-serif";
 
-  // Crear área de mensajes
   const listaMensajes = document.createElement("div");
   listaMensajes.style.flex = "1";
   listaMensajes.style.overflowY = "auto";
   listaMensajes.style.padding = "10px";
 
-  // Crear barra de entrada
   const inputBar = document.createElement("div");
   inputBar.style.display = "flex";
   inputBar.style.borderTop = "1px solid #ccc";
   inputBar.style.padding = "10px";
-  inputBar.style.background = "#f5f5f5";
 
-  // Campo de texto
   const input = document.createElement("input");
   input.type = "text";
   input.placeholder = "Escribe tu mensaje...";
-  input.maxLength = 140;
-  input.style.flex = "1";
+  input.maxLength = 60;
+  input.style.flex = "0.5";
   input.style.padding = "10px";
   input.style.fontSize = "16px";
 
-  // Botón enviar
   const boton = document.createElement("button");
   boton.innerText = "Enviar";
   boton.style.marginLeft = "10px";
@@ -43,52 +35,80 @@
   boton.style.fontSize = "16px";
   boton.style.cursor = "pointer";
 
-// Función para enviar mensaje
-async function enviarMensaje() {
-  const texto = input.value.trim();
-  if (texto === "") return;
+  const contador = document.createElement("div");
+  contador.innerText = "0 / 140";
+  contador.style.fontSize = "30px";
+  contador.style.color = "#666";
+  contador.style.marginTop = "10px";
+  contador.style.alignSelf = "flex-end";
 
-  const username = "JostOficial"; // tu usuario fijo
-
-  await fetch(API_URL, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      username: username,
-      message: texto
-    }),
+  input.addEventListener("input", () => {
+    contador.innerText = `${input.value.length} / 140`;
   });
 
-  input.value = "";
-  obtenerMensajes();
-}
+  const mensajes = [];
+  const API_URL = "https://chat.nrywhite.lat/chats";
 
+  async function enviarMensaje() {
+    const texto = input.value.trim();
+    if (texto === "") return;
 
+    const username = "JostOficial";
 
-  // Permitir enviar con Enter
+    await fetch(API_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        username: username,
+        message: texto
+      }),
+    });
+
+    input.value = "";
+    obtenerMensajes();
+    contador.innerText = "0 / 140";
+  }
+
   input.addEventListener("keydown", (e) => {
     if (e.key === "Enter") enviarMensaje();
   });
 
-  // Evento del botón
   boton.addEventListener("click", enviarMensaje);
 
-  // Función para obtener y mostrar mensajes
-  const Actualizado = true;
+  let Actualizado = true;
   async function obtenerMensajes() {
     try {
       const res = await fetch(API_URL);
       const data = await res.json();
       listaMensajes.innerHTML = "";
+
       data.forEach(({ message }) => {
         const item = document.createElement("div");
-        item.innerText = message;
-        item.style.padding = "5px 0";
+        const IsImg = /\.(jpg|jpeg|png|gif|webp)$/i.test(message.trim());
+
+        item.style.padding = "10px 15px";
+        item.style.marginBottom = "10px";
+        item.style.backgroundColor = "#007BFF";
+        item.style.color = "white";
+        item.style.borderRadius = "5px";
+        item.style.maxWidth = "70%";
+        item.style.wordBreak = "break-word";
+
+        if (IsImg) {
+          const mostrar_imagen = document.createElement("img");
+          mostrar_imagen.src = message.trim();
+          mostrar_imagen.style.maxWidth = "100%";
+          mostrar_imagen.style.borderRadius = "5px";
+          item.innerHTML = "";
+          item.appendChild(mostrar_imagen);
+        } else {
+          item.innerText = message;
+        }
+
         listaMensajes.appendChild(item);
       });
-      // Scroll al final
-      //listaMensajes.scrollTop = listaMensajes.scrollHeight;
-      if(Actualizado) {
+
+      if (Actualizado) {
         listaMensajes.scrollTop = listaMensajes.scrollHeight;
         Actualizado = false;
       }
@@ -97,14 +117,13 @@ async function enviarMensaje() {
     }
   }
 
-  // Refrescar cada 5 segundos
   setInterval(obtenerMensajes, 5000);
   obtenerMensajes();
 
-  // Armar la interfaz
   inputBar.appendChild(input);
   inputBar.appendChild(boton);
   app.appendChild(listaMensajes);
+  inputBar.appendChild(contador);
   app.appendChild(inputBar);
   document.body.appendChild(app);
 </script>
